@@ -1,16 +1,19 @@
 import "./App.css";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useCountStore } from "./store/count";
-// import {useCountStore, countStore } from "./store/count";
+// import { useCountStore, countStore } from "./store/count";
 import { useToDoListStore } from "./store/toDoList";
+import { createPaginationDataStore } from "./store/paginationData";
+import { mockPageDataRequest, TestData } from "./mock/pageDataService";
+import { useStore } from "zustand";
 
 function App() {
   const { count, increase } = useCountStore();
   const { list, add, removeAt, updateAt } = useToDoListStore();
-  console.log(useCountStore.setState);
+
   useEffect(() => {
-    return useToDoListStore.subscribe(
+    const unsubscribe = useToDoListStore.subscribe(
       (state) => state.list,
       (next, prev) => {
         useCountStore.setState((state) => {
@@ -25,7 +28,29 @@ function App() {
         // countStore.setState({ count: next.filter(({ done }) => done).length });
       }
     );
+    return () => unsubscribe();
   }, []);
+
+  //下边是通过useMemo的方式把一个依赖某个请求参数的闭包函数所创建的store缓存起来，这样可以避免在每次渲染的时候都重新创建store。
+  //不仅仅是为了提高性能，主要的目的是为了避免store的重复创建，保证它的唯一性
+  const paginationDataStore = useMemo(
+    () =>
+      createPaginationDataStore<TestData>({
+        request: mockPageDataRequest,
+      }),
+    []
+  );
+  //结合useStore来使用上边缓存起来的store
+  const {
+    data,
+    page,
+    total,
+    pageSize,
+    hasMore,
+    hasError,
+    isLoading,
+    fetchMore,
+  } = useStore(paginationDataStore);
 
   return (
     <>
@@ -65,6 +90,37 @@ function App() {
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="card">
+        <h2>pagination data</h2>
+        <div>
+          <button onClick={fetchMore} disabled={isLoading || !hasMore}>
+            {isLoading ? "loading..." : !hasMore ? "no more data" : "load more"}
+          </button>
+          {page}/{Math.ceil(total / pageSize)}
+        </div>
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+          {data.map((item, index) => (
+            <div
+              key={index}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+              }}
+            >
+              <span>{index}</span>
+              <img
+                style={{ width: "50px", height: "50px" }}
+                src={item.avtar}
+                alt={item.name}
+              />
+              <span>{item.name}</span>
+            </div>
+          ))}
+        </div>
+        <div>{hasError ? "error" : null}</div>
       </div>
     </>
   );
