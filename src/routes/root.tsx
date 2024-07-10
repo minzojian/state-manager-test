@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { mockPageDataRequest } from "../mock/pageDataService";
 import { useCountStore } from "../store/count";
@@ -5,41 +6,47 @@ import { usePaginationDataStore } from "../store/paginationData";
 import { useToDoListStore } from "../store/toDoList";
 
 export default function App() {
-  //这是两个count的store，分别是count1和count2
-  const [count, { increase }] = useCountStore(1, "count1");
-  const [count2, { increase: increase2 }] = useCountStore(10, "count2");
-  //这是一个todoList的store，包含了增删改查的操作
-  const [list, { add, removeAt, updateAt }, toDoStore] = useToDoListStore(
-    [],
-    "todoList"
-  );
-  //这里通过useAtom来获取doneCount的值。注意不能直接使用useAtom。而是使用store的useAtom.因为还要绑定store才能获取到相关的状态值。
-  const [doneCount] = toDoStore.useAtom(toDoStore.atoms.doneCount);
+  const [{ count, increase }, countStore] = useCountStore("count1");
+  const [{ count: count2, increase: increase2 }] = useCountStore("count2");
+  const [{ list, add, removeAt, updateAt }, toDoListStore] = useToDoListStore();
 
-  //这里是一个模拟分页请求的paginationDataStore。包含了分页数据的请求和状态管理
-  const paginationDataStore = usePaginationDataStore({
+  useEffect(() => {
+    const unsubscribe = toDoListStore.subscribe(
+      (state) => state.list,
+      (next, prev) => {
+        countStore.setState((state) => {
+          state.count = next.filter(({ done }) => done).length;
+          return state;
+        });
+        //下边这种方式也是可以的。在没有使用immer的情况下，直接返回一个新的对象，该对象会和旧对象的值进行合并。第二个参数replace表示是否完全替换旧对象，即不合并
+        // useCountStore.setState({
+        //   count: next.filter(({ done }) => done).length,
+        // });
+        //这种是采用countStore的setState来更新的方式
+        // countStore.setState({ count: next.filter(({ done }) => done).length });
+      }
+    );
+    return () => unsubscribe();
+  }, []);
+
+  const [
+    { data, page, total, pageSize, hasMore, hasError, isLoading, fetchMore },
+  ] = usePaginationDataStore({
     request: mockPageDataRequest,
-    initState: { data: [] },
-    storeKey: "pageData",
   });
-  const [paginationState, { fetchMore }] = paginationDataStore;
-
-  const { data, page, total, pageSize, hasMore, hasError, isLoading } =
-    paginationState;
 
   return (
     <>
       <Link to="/page1">to page1</Link>
-      <h1>state manage test - Jotai</h1>
+      <h1>state manage test - zustand</h1>
       <div className="card">
         <button onClick={increase}>count is {count}</button>
         <button onClick={increase2}>count2 is {count2}</button>
-        <br />
         <button onClick={() => add("" + Math.random())}>
-          add random number task into todo list {list.length}
+          add random number task into todo list
         </button>
 
-        <div>Done Task:{doneCount}</div>
+        <div>Done Task:{count}</div>
         {list.map((item, index) => (
           <div key={index}>
             <div style={{ display: "flex", alignItems: "center" }}>

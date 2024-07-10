@@ -1,35 +1,48 @@
-import { atom, createStore, useAtom } from "jotai";
+import { create, createStore, useStore } from "zustand";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useCountStore } from "../store/count";
 
-const counterAtom = atom(0);
+type CountState = {
+  count: number;
+  increase: () => void;
+  reset: () => void;
+  updateCount: (value: number) => void;
+};
 
-const storeA = createStore();
-const storeB = createStore();
+const createCountStore = () =>
+  createStore<CountState>((set) => ({
+    count: 0,
+    increase: () => set((state) => ({ count: state.count + 1 })),
+    reset: () => set({ count: 0 }),
+    updateCount: (value) => set({ count: value }),
+  }));
+
+const store1 = createCountStore();
+const store2 = createCountStore();
 
 const Page1: React.FC = () => {
   //这里是一个简单的计数器测试
   //这里使用了两个不同的store，所以两个count是独立的。
-  const [count, setCount] = useAtom(counterAtom, { store: storeA });
-  const [count2, setCount2] = useAtom(counterAtom, { store: storeB });
-  const increment = () => {
-    setCount((prevCount) => prevCount + 1);
-  };
-  const increment2 = () => {
-    setCount2((prevCount) => prevCount + 1);
-  };
 
+  const { count, increase } = useStore(store1);
+  const { count: count2, increase: increase2 } = useStore(store2);
+  const [{ count: count3, increase: increase3 }] = useCountStore();
   return (
     <div>
       <Link to="/">to root</Link>
       <h1>Page 1</h1>
       <div>
         <p>Count: {count}</p>
-        <button onClick={increment}>Increment</button>
+        <button onClick={increase}>increase via store1</button>
       </div>
       <div>
         <p>Count2: {count2}</p>
-        <button onClick={increment2}>Increment2</button>
+        <button onClick={increase2}>increase via store2</button>
+      </div>
+      <div>
+        <p>Count3: {count3}</p>
+        <button onClick={increase3}>increase via useCountStore</button>
       </div>
     </div>
   );

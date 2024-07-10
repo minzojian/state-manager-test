@@ -3,6 +3,7 @@
 import { createStore } from 'zustand'
 import { combine, devtools, subscribeWithSelector } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
+import { useCustomStore } from './useCustomStore'
 
 export type PaginationData<T> = {
     data: T[]
@@ -23,7 +24,8 @@ const defaultPaginationData: PaginationData<any> = {
     isLoading: false,
     hasMore: true,
     hasError: false,
-    _retry: 0
+    _retry: 0,
+
 }
 
 export type PaginationDataResponse<T> = Promise<{
@@ -42,6 +44,7 @@ export type usePaginationDataOptions<T> = {
     request: (page: number, pageSize: number) => PaginationDataResponse<T>
     maxRetry?: number
     retryDelay?: number
+    storeKey?: string
 }
 
 /**
@@ -51,8 +54,8 @@ export type usePaginationDataOptions<T> = {
  * @param options 
  * @returns 
  */
-export const createPaginationDataStore = <T = unknown>(options: usePaginationDataOptions<T>) => {
-    return createStore(
+export const usePaginationDataStore = <T = unknown>(options: usePaginationDataOptions<T>) => {
+    return useCustomStore(() =>
         subscribeWithSelector(
             devtools(
                 immer(
@@ -107,5 +110,6 @@ export const createPaginationDataStore = <T = unknown>(options: usePaginationDat
                 )
             )
         )
+        , null, options.storeKey || 'default_pagination_data'
     )
 }
