@@ -67,33 +67,15 @@ const countAtom = atom(
 ~~因为这个页面是动态加载的，一般这种页面组件里的内容都是独立不会被外部依赖的。定义在这个页面里的atom一般只在page1的范围内使用。~~
 
 
+在root页面中，分别用useCustomStore封装了三个不同的自定义store  
+useCountStore
+一个计数器的状态管理
 
+useToDoListStore
+一个todo list的状态管理
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+usePaginationDataStore
+一个分页数据加载的状态管理
 
-Currently, two official plugins are available:
+useCustomStore的作用是把store和atom串起来。
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
-```
-
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
